@@ -39,8 +39,14 @@ packages/              locally packaged software
 The split exists so that bringing up a second machine means writing a new
 `hosts/` directory and touching nothing under `modules/`.
 
-Not managed here: dotfiles. `~/.config` is still a set of loose files, so a
-fresh install reproduces the system but not the i3 / picom / zsh setup.
+Not managed here: dotfiles. A fresh install reproduces the system but not the
+desktop on top of it. `~/.config/i3`, `picom`, `rofi`, `btop` and friends are
+still loose files, and the two that are versioned live in their own repos:
+
+```
+~/.config/nvim    github.com/hckforpeace/nvim
+~/.zshrc          github.com/hckforpeace/.zshrc   (hardlinked to ~/zshrc/zshrc.config)
+```
 
 ## Rebuilding
 
@@ -61,10 +67,19 @@ Build and keep the current system as the boot default until the next reboot:
 sudo nixos-rebuild test --flake .#nixos-pb
 ```
 
+There is a shell alias for the first one, defined in `~/.zshrc`:
+
+```sh
+alias nrb="sudo nixos-rebuild switch --flake $HOME/nixos-config#nixos-pb"
+```
+
+It uses an absolute path on purpose, so `nrb` rebuilds this repo from any
+working directory.
+
 Two things that bite:
 
 - **Always pass `--flake`.** Plain `nixos-rebuild switch` ignores this repo and
-  falls back to `/etc/nixos`, which is not where the config lives.
+  falls back to `/etc/nixos`, which is not where the config lives. Use `nrb`.
 - **Flakes only see files tracked by git.** A new file that has not been
   `git add`-ed is invisible to the build, and the failure reads as a confusing
   "file not found" or "attribute missing". `git add` first.
