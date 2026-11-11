@@ -14,6 +14,7 @@
 {
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.systemd-boot.configurationLimit = 20;
 
   boot.initrd.luks.devices."cryptlvm" = {
     device = "/dev/disk/by-uuid/16c1cdf1-619e-412e-9786-97259c795992";
