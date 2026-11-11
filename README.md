@@ -14,6 +14,8 @@ hosts/<name>/          MACHINE-SPECIFIC -- wrong on any other machine
   disks.nix              boot loader + LUKS container UUID
   quirks.nix             hardware workarounds for this model
 
+hosts/vm-test/         throwaway VirtualBox VM for testing modules/ -- see "Testing in a VM"
+
 modules/               PORTABLE -- should work unchanged on a new host
   base.nix               nix settings, locale, timezone, shell, core CLI tools
   networking.nix         NetworkManager, tailscale, bluetooth
@@ -22,6 +24,7 @@ modules/               PORTABLE -- should work unchanged on a new host
   optional/              not imported by default; opt in per host
     ollama.nix             local LLM inference
     apps.nix               dbeaver, discord, texlive, easyeda
+    virtualisation.nix     VirtualBox host, needed to run hosts/vm-test
 
 packages/              locally packaged software
   easyeda/               EasyEDA standalone client, FHS-wrapped
@@ -86,3 +89,45 @@ release notes; do not change `system.stateVersion` on an existing machine.
   Radeon 680M drives the display. Enabling the proprietary driver needs a
   `hardware.nvidia` block with this machine's PRIME bus IDs
   (`amdgpuBusId = "PCI:6:0:0"`, `nvidiaBusId = "PCI:1:0:0"`).
+
+## Testing in a VM
+
+`hosts/vm-test` is a throwaway host that imports every module under `modules/`
+and nothing machine-specific. Building and booting it is how you check that a
+change to a portable module works somewhere other than this laptop -- and that
+the "bring up a second machine by writing a new `hosts/` directory" story
+actually holds.
+
+The host machine needs the VirtualBox hypervisor, which is not what installing
+the `virtualbox` package gives you. Import `modules/optional/virtualisation.nix`
+into the host's `hosts/<name>/default.nix`, rebuild, and **reboot**: the
+hypervisor is a kernel module and it is loaded at boot.
+
+Build the appliance and boot it:
+
+```sh
+nix build .#nixosConfigurations.vm-test.config.system.build.virtualBoxOVA
+VBoxManage import result/*.ova
+VBoxManage startvm nixos-vm-test
+```
+
+Log in as `pierre`, password `test` (set in `hosts/vm-test/default.nix`).
+A pass looks like: lightdm prompts, the i3 session starts, `nmcli` shows a
+connection, and the tools from `modules/desktop.nix` are on `$PATH`. Backlight
+and bluetooth have no hardware behind them in a VM, so those two failing tells
+you nothing. i3 asking to generate a config is also expected -- dotfiles are
+not managed here.
+
+Re-import after a change, then throw the VM away; it is not a machine to keep:
+
+```sh
+VBoxManage unregistervm nixos-vm-test --delete
+```
+
+For the narrower question "does it build and boot at all", skip VirtualBox and
+use QEMU, which needs no host configuration and no reboot:
+
+```sh
+nixos-rebuild build-vm --flake .#vm-test
+./result/bin/run-vm-test-vm
+```

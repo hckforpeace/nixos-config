@@ -14,5 +14,12 @@
       system = "x86_64-linux";
       modules = [ ./hosts/nixos-pb ];
     };
+
+    # Throwaway VirtualBox appliance used to test the portable modules; see
+    # hosts/vm-test. Not a real machine -- never `switch` anything to it.
+    nixosConfigurations.vm-test = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [ ./hosts/vm-test ];
+    };
   };
 }

@@ -18,6 +18,9 @@
     ../../modules/desktop.nix
     ../../modules/users.nix
 
+    # VirtualBox host, so this machine can build and boot hosts/vm-test.
+    #../../modules/optional/virtualisation.nix
+
     # Optional -- not needed for a working first install. Uncomment as wanted.
     # ../../modules/optional/ollama.nix
     # ../../modules/optional/apps.nix
