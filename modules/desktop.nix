@@ -34,7 +34,6 @@
     brightnessctl
     rofi
     picom
-    nitrogen
     xclip
     autorandr
     terminator
